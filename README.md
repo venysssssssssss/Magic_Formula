@@ -1,35 +1,34 @@
-# Magic_Formula
-## Documentação do Código do Projeto 1 - Backtest modelo de investimento Magic Formula
+## Documentação do Projeto de Backtest da Fórmula Mágica de Investimento
 
-Este é um projeto de backtest que visa testar a eficácia da regra de investimento da fórmula mágica de Joel Greenblatt no mercado de ações brasileiro nos últimos anos. A fórmula mágica é uma estratégia de investimento que classifica ações com base em métricas de valuation (EV/EBIT) e retorno sobre o capital investido (ROIC).
+Este projeto tem como objetivo testar a eficácia da regra de investimento da Fórmula Mágica de Joel Greenblatt no mercado de ações brasileiro nos últimos anos. A seguir, detalhamos cada passo do código.
 
-### Passo 1 - Importar os módulos e bibliotecas
+### Passo 1: Importando os Módulos Necessários
 ```python
 import pandas as pd
 import quantstats as qs
 ```
-Neste passo, os módulos `pandas` e `quantstats` são importados. O `pandas` é uma biblioteca amplamente usada para manipulação de dados em Python, enquanto o `quantstats` é usado para análise quantitativa de séries temporais financeiras.
+Neste passo, importamos as bibliotecas `pandas` e `quantstats`, que serão usadas para manipulação de dados e análise quantitativa, respectivamente.
 
-### Passo 2 - Baixar os dados disponibilizados
+### Passo 2: Baixando os Dados Disponibilizados
 ```python
 dados_empresas = pd.read_csv("dados_empresas.csv")
 ```
-Neste passo, o código lê os dados das empresas a partir de um arquivo CSV chamado "dados_empresas.csv" e armazena-os em um DataFrame do pandas chamado `dados_empresas`.
+Neste passo, importamos os dados das empresas brasileiras de um arquivo CSV chamado "dados_empresas.csv" e armazenamos esses dados em um DataFrame chamado `dados_empresas`.
 
-### Passo 3 - Filtrar a liquidez
+### Passo 3: Filtrando a Liquidez
 ```python
 dados_empresas = dados_empresas[dados_empresas['volume_negociado'] > 1000000]
 ```
-Neste passo, o código filtra as empresas com base no volume negociado diário, mantendo apenas aquelas com um volume superior a 1.000.000 de ações negociadas.
+Aqui, filtramos as empresas com base no volume de negociação diário, mantendo apenas aquelas com um volume superior a 1.000.000 de ações negociadas.
 
-### Passo 4 - Calcula os retornos mensais das empresas
+### Passo 4: Calculando os Retornos Mensais das Empresas
 ```python
 dados_empresas['retorno'] = dados_empresas.groupby('ticker')['preco_fechamento_ajustado'].pct_change()
 dados_empresas['retorno'] = dados_empresas.groupby('ticker')['retorno'].shift(-1)
 ```
-Neste passo, o código calcula os retornos mensais das empresas, considerando a diferença percentual entre os preços de fechamento ajustados. Os retornos são calculados em relação ao mês anterior.
+Neste passo, calculamos os retornos mensais das empresas, considerando a variação percentual dos preços de fechamento ajustados. Os retornos são calculados em relação ao mês anterior.
 
-### Passo 5 - Cria o ranking dos indicadores
+### Passo 5: Criando o Ranking dos Indicadores
 ```python
 dados_empresas['ranking_ev_ebit'] = dados_empresas.groupby('data')['ebit_ev'].rank(ascending=False)
 dados_empresas['ranking_roic'] = dados_empresas.groupby('data')['roic'].rank(ascending=False)
@@ -37,30 +36,30 @@ dados_empresas['ranking_roic'] = dados_empresas.groupby('data')['roic'].rank(asc
 dados_empresas['ranking_final'] = dados_empresas['ranking_ev_ebit'] + dados_empresas['ranking_roic']
 dados_empresas['ranking_final'] = dados_empresas.groupby('data')['ranking_final'].rank()
 ```
-Neste passo, o código calcula os rankings das empresas com base nas métricas EV/EBIT e ROIC. O ranking é calculado em relação aos valores dessas métricas em cada data. Um ranking final é obtido somando os rankings das duas métricas.
+Neste passo, criamos rankings para as empresas com base nas métricas EV/EBIT e ROIC. Um ranking final é obtido somando os rankings das duas métricas. 
 
-### Passo 6 - Cria as carteiras
+### Passo 6: Criando as Carteiras
 ```python
 dados_empresas = dados_empresas[dados_empresas['ranking_final'] <= 10]
 ```
-Neste passo, o código cria carteiras selecionando apenas as empresas que estão classificadas entre as 10 melhores com base no ranking final.
+Aqui, formamos carteiras selecionando apenas as empresas que estão classificadas entre as 10 melhores com base no ranking final.
 
-### Passo 7 - Calcula a rentabilidade por carteira
+### Passo 7: Calculando a Rentabilidade por Carteira
 ```python
 rentabilidade_por_carteiras = dados_empresas.groupby('data')['retorno'].mean()
 rentabilidade_por_carteiras = rentabilidade_por_carteiras.to_frame()
 ```
-Neste passo, o código calcula a rentabilidade média das carteiras ao longo do tempo. A rentabilidade é calculada como a média dos retornos das empresas que compõem cada carteira.
+Neste passo, calculamos a rentabilidade média das carteiras ao longo do tempo, considerando a média dos retornos das empresas que compõem cada carteira.
 
-### Passo 8 - Calcula a rentabilidade do modelo
+### Passo 8: Calculando a Rentabilidade do Modelo
 ```python
 rentabilidade_por_carteiras['modelo'] = (rentabilidade_por_carteiras['retorno'] + 1).cumprod() - 1
 rentabilidade_por_carteiras = rentabilidade_por_carteiras.shift(1)
 rentabilidade_por_carteiras = rentabilidade_por_carteiras.dropna()
 ```
-Neste passo, o código calcula a rentabilidade do modelo de investimento. A rentabilidade é calculada como o retorno acumulado das carteiras ao longo do tempo, considerando a reinvestimento dos retornos.
+Aqui, calculamos a rentabilidade do modelo de investimento como o retorno acumulado das carteiras ao longo do tempo, considerando o reinvestimento dos retornos.
 
-### Passo 9 - Calcula a rentabilidade do Ibovespa no mesmo período
+### Passo 9: Calculando a Rentabilidade do Ibovespa no Mesmo Período
 ```python
 ibov = pd.read_csv('ibov.csv')
 
@@ -69,18 +68,17 @@ retorno_acum_ibov = (1 + retornos_ibov).cumprod() - 1
 rentabilidade_por_carteiras['ibovespa'] = retorno_acum_ibov.values
 rentabilidade_por_carteiras = rentabilidade_por_carteiras.drop('retorno', axis=1)
 ```
-Neste passo, o código lê os dados do índice Ibovespa a partir de um arquivo CSV chamado 'ibov.csv' e calcula a rentabilidade acumulada do Ibovespa no mesmo período em que as carteiras foram avaliadas.
+Aqui, lemos os dados do índice Ibovespa a partir de um arquivo CSV e calculamos sua rentabilidade acumulada no mesmo período em que as carteiras foram avaliadas.
 
-### Passo 10 - Analisa os resultados
+### Passo 10: Analisando os Resultados
 ```python
 qs.extend_pandas()
 rentabilidade_por_carteiras.index = pd.to_datetime(rentabilidade_por_carteiras.index)
 
 rentabilidade_por_carteiras['modelo'].plot_monthly_heatmap()
 rentabilidade_por_carteiras['ibovespa'].plot_monthly_heatmap()
+rentabilidade_por_carteiras.plot()
 ```
-Neste passo, o código utiliza a biblioteca `quantstats` para analisar e visualizar os resultados. Ele gera um heatmap mensal das rentabilidades do modelo e do Ibovespa, permitindo uma análise visual da performance ao longo do tempo.
+Neste passo, usamos a biblioteca `quantstats` para realizar análises e visualizações dos resultados. Foram gerados gráficos de heatmap mensal das rentabilidades do modelo e do Ibovespa, bem como um gráfico geral de rentabilidades.
 
-Além disso, o código calcula a rentabilidade anualizada do modelo.
-
-Isso conclui a documentação do código do projeto de backtest da fórmula mágica de investimento no mercado de ações brasileiro. O projeto visa testar a eficácia dessa estratégia nos últimos anos e analisar sua performance em relação ao índice Ibovespa.
+Isso conclui a documentação deste projeto de backtest da Fórmula Mágica de Investimento no mercado de ações brasileiro. O objetivo é testar a estratégia e comparar seu desempenho com o índice Ibovespa.
